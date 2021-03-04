@@ -15,7 +15,7 @@ class MainPage extends StatefulWidget {
   _MainPageState createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   InAppWebViewController controller;
   AppModel appModel = AppModel();
   int selectedIndex;
@@ -39,6 +39,7 @@ class _MainPageState extends State<MainPage> {
 
   @override
   void initState() {
+    WidgetsBinding.instance.addObserver(this);
     AppFunctions.setDarkForeground();
     selectedIndex = 0;
     showDetails = false;
@@ -59,11 +60,39 @@ class _MainPageState extends State<MainPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    /// pause audios when app goes to background
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      pauseAudio();
+      closeAudioPopups();
+    }
+    super.didChangeAppLifecycleState(state);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(key: scaffoldKey, body: body());
   }
 
   // funtions
+  void closeAudioPopups() {
+    String jsSource = '''
+      closeAudioPopups('popup_13_1_video');
+      closeAudioPopups('popup_13_2_video');
+      closeAudioPopups('popup_24_1_video');
+      closeAudioPopups('popup_24_2_video');
+      closeAudioPopups('FeiHong_end_1_audio');
+      closeAudioPopups('FeiHong_end_2_audio');
+      closeAudioPopups('khari_escape_01_audio');
+      closeAudioPopups('khari_escape_02_audio');
+      closeAudioPopups('Chicago_end_01_audio');
+      closeAudioPopups('Chicago_end_02_audio');
+      closeModalFromMobile();
+    ''';
+
+    controller.evaluateJavascript(source: jsSource);
+  }
 
   // get html data for the current selected page and show it
   Future<void> getDataForPage({
@@ -111,7 +140,7 @@ class _MainPageState extends State<MainPage> {
     await callJsHandler();
 
     // check if popup is closed then show the bottom navigation list
-    addJsHandler();
+    addJsHandlerForDoubleTap();
   }
 
   Future<void> callJsHandler() async {
@@ -120,7 +149,7 @@ class _MainPageState extends State<MainPage> {
     ''');
   }
 
-  void addJsHandler() {
+  void addJsHandlerForDoubleTap() {
     controller?.addJavaScriptHandler(
       handlerName: 'popupOpened',
       callback: (value) {
@@ -142,6 +171,16 @@ class _MainPageState extends State<MainPage> {
         }
       },
     );
+  }
+
+  /// pauses single audio without popup
+  void pauseAudio() {
+    controller.evaluateJavascript(source: '''
+      var audioTags = document.getElementsByTagName("audio");
+      for (i = 0; i < audioTags.length; i++) {
+        audioTags[i].pause();
+      };
+    ''');
   }
 
   void showDoubleTapIcon() {
