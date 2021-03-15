@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:history_adventures/base/functions/functions.dart';
 import 'package:history_adventures/base/images/images.dart';
+import 'package:history_adventures/base/styles/colors.dart';
 import 'package:history_adventures/management/app_model.dart';
 import 'package:history_adventures/ui/pages/navigation/navigation_page.dart';
 
@@ -36,6 +37,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   bool webViewScrollEnabled = true;
   bool snackBarIsOpen = false;
   bool ignorePointer = false;
+  int progress = 0;
 
   @override
   void initState() {
@@ -222,7 +224,25 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           children: [
             Align(alignment: Alignment.center, child: content()),
             Align(alignment: Alignment.bottomCenter, child: bottomNavigation()),
-            // Align(alignment: Alignment.topLeft, child: topNavigation()),
+            progress < 100
+                ? Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                    color: Colors.white.withOpacity(0.2),
+                    child: Center(
+                      child: Container(
+                        width: 50,
+                        height: 50,
+                        child: CircularProgressIndicator(
+                          value: progress / 100,
+                          valueColor: AlwaysStoppedAnimation(
+                            AppColors.blue,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : SizedBox(),
           ],
         ),
       ),
@@ -250,8 +270,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
               initialOptions: InAppWebViewGroupOptions(
                 ios: IOSInAppWebViewOptions(allowsInlineMediaPlayback: true),
               ),
-              onProgressChanged: (_controller, progress) async {
-                print(progress);
+              onProgressChanged: (_controller, progressValue) async {
+                setState(() {
+                  progress = progressValue;
+                });
+                print(progressValue);
               },
               onWebViewCreated: (_controller) async {
                 controller = _controller;
