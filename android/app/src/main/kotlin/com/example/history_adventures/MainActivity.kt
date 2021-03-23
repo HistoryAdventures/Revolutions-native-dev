@@ -1,4 +1,4 @@
-package com.example.history_adventures
+package com.spencerstriker.history_adventures
 
 import io.flutter.embedding.android.FlutterActivity
 
